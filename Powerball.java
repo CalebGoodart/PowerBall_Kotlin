@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -25,13 +26,16 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.UUID;
 
 public class Powerball extends JavaPlugin implements Listener {
 
-    private Hashtable<UUID, Integer> playerKills = new Hashtable<>();
-    private Hashtable<UUID, Player> playersOnDashCoolDown = new Hashtable<UUID, Player>();
+    private Map<UUID, Integer> playerKills = new HashMap<>();
+    private Map<UUID, Player> playersOnDashCoolDown = new HashMap<>();
     private boolean gameRunning = false;
 
     @Override
@@ -41,7 +45,7 @@ public class Powerball extends JavaPlugin implements Listener {
         this.getCommand("startgame").setExecutor(new startGame());
 
         getServer().getPluginManager().registerEvents(this, this);
-    }//Ends OnEnable
+    }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -50,18 +54,19 @@ public class Powerball extends JavaPlugin implements Listener {
         event.setJoinMessage("Welcome, " + player.getName() + "to My Server!");
 
         //makes the player boucne
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-            public void run() {
-
-                if (player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK
-                        && player.getVelocity().getY() < 0) {
-
-                    Vector c = new Vector(player.getVelocity().getX(), 3, player.getVelocity().getZ());
-                    player.setVelocity(c);
-                }
-            }
-        }, 0, 1);
-    }//Ends onPlayerJoin
+//        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+//            public void run() {
+//
+//                if (player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK
+//                        && player.getVelocity().getY() < 0) {
+//
+//                    Vector c = new Vector(player.getVelocity().getX(), 3, player.getVelocity().getZ());
+//                    player.setVelocity(c);
+//
+//                }
+//            }
+//        }, 0, 1);
+    }
 
     @EventHandler
     public void playerLaunch(PlayerToggleSneakEvent event) {
@@ -70,7 +75,7 @@ public class Powerball extends JavaPlugin implements Listener {
         if (player.isSneaking() && player.isOnGround() && (player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK)) {
             player.setVelocity(new Vector(player.getVelocity().getX(), 5, player.getVelocity().getZ()));
         }
-    }//End of playerLaunch
+    }
 
     @EventHandler
     public void playerFastFall(PlayerToggleSneakEvent event) {
@@ -79,7 +84,7 @@ public class Powerball extends JavaPlugin implements Listener {
         if (player.isSneaking() && !(player.isOnGround()) && ((player.getVelocity().getY() <= 0))) {
             player.setVelocity(new Vector(player.getVelocity().getX(), -5, player.getVelocity().getZ()));
         }
-    }//End of playerFastFall
+    }
 
     @EventHandler
     public void playerDash(PlayerInteractEvent event) {
@@ -87,7 +92,7 @@ public class Powerball extends JavaPlugin implements Listener {
 
         if (event.getAction() == Action.LEFT_CLICK_AIR && player.getInventory().getItemInMainHand().getType() == Material.SNOWBALL) {
 
-            if (playersOnDashCoolDown.contains(player)) {
+            if (playersOnDashCoolDown.containsKey(player.getUniqueId())) {
 
                 player.sendMessage("On CoolDown!");
 
@@ -96,6 +101,7 @@ public class Powerball extends JavaPlugin implements Listener {
                 Vector dashSpeed = new Vector(player.getLocation().getDirection().getX() * 3,
                         player.getLocation().getDirection().getY(),
                         player.getLocation().getDirection().getZ() * 3);
+
                 player.setVelocity(dashSpeed);
                 playersOnDashCoolDown.put(player.getUniqueId(), player);
 
@@ -118,7 +124,8 @@ public class Powerball extends JavaPlugin implements Listener {
         }
     }
 
-    public void StartGame() {
+    public void startGame() {
+
         gameRunning = true;
 
         new BukkitRunnable() {
@@ -144,11 +151,11 @@ public class Powerball extends JavaPlugin implements Listener {
     }
 
     private void giveKit(Player player) {
-        ItemStack p = new ItemStack(Material.SPLASH_POTION, 2);
-        PotionMeta m = (PotionMeta) p.getItemMeta();
-        m.addCustomEffect(new PotionEffect(PotionEffectType.SPEED, 128 * 20, 10), true);
-        p.setItemMeta(m);
-        player.getInventory().setItem(1, p);
+        ItemStack itemStack = new ItemStack(Material.SPLASH_POTION, 2);
+        PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
+        potionMeta.addCustomEffect(new PotionEffect(PotionEffectType.SPEED, 128 * 20, 10), true);
+        itemStack.setItemMeta(potionMeta);
+        player.getInventory().setItem(1, itemStack);
     }
 
     @EventHandler
@@ -186,7 +193,7 @@ public class Powerball extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void falldamage(EntityDamageEvent event) {
+    public void fallDamage(EntityDamageEvent event) {
 
         if (event.getCause().equals(EntityDamageEvent.DamageCause.FALL)) {
             event.setCancelled(true);
@@ -216,15 +223,38 @@ public class Powerball extends JavaPlugin implements Listener {
     public class startGame implements CommandExecutor {
 
         public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-            StartGame();
+
+            if (gameRunning){
+                sender.sendMessage("Game is Already running!");
+                return true;
+            }
+
+            startGame();
             return true;
+        }
+    }
+
+    @EventHandler
+    public void playerBounce(PlayerMoveEvent event){
+
+        Player player = event.getPlayer();
+
+        player.sendMessage(event.getTo().getY() + " " + event.getFrom().getY());
+
+
+        if (player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK
+                ) {
+
+            Vector c = new Vector(player.getVelocity().getX(), 3, player.getVelocity().getZ());
+            player.setVelocity(c);
+            player.sendMessage("BOUNCE");
         }
     }
 
     @Override
     public void onDisable() {
         super.onDisable();
-    }//Ends onDisable
-}//Ends PowerBall
+    }
+}
 
 
