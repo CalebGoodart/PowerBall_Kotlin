@@ -19,6 +19,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -53,19 +54,6 @@ public class Powerball extends JavaPlugin implements Listener {
 
         event.setJoinMessage("Welcome, " + player.getName() + "to My Server!");
 
-        //makes the player boucne
-//        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-//            public void run() {
-//
-//                if (player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK
-//                        && player.getVelocity().getY() < 0) {
-//
-//                    Vector c = new Vector(player.getVelocity().getX(), 3, player.getVelocity().getZ());
-//                    player.setVelocity(c);
-//
-//                }
-//            }
-//        }, 0, 1);
     }
 
     @EventHandler
@@ -125,6 +113,8 @@ public class Powerball extends JavaPlugin implements Listener {
     }
 
     public void startGame() {
+
+        if (gameRunning) throw new IllegalStateException();
 
         gameRunning = true;
 
@@ -224,11 +214,6 @@ public class Powerball extends JavaPlugin implements Listener {
 
         public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-            if (gameRunning){
-                sender.sendMessage("Game is Already running!");
-                return true;
-            }
-
             startGame();
             return true;
         }
@@ -241,9 +226,8 @@ public class Powerball extends JavaPlugin implements Listener {
 
         player.sendMessage(event.getTo().getY() + " " + event.getFrom().getY());
 
-
-        if (player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK
-                ) {
+        if ((event.getFrom().getY() - event.getTo().getY() > .6 )
+                && event.getTo().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK) {
 
             Vector c = new Vector(player.getVelocity().getX(), 3, player.getVelocity().getZ());
             player.setVelocity(c);
@@ -256,5 +240,4 @@ public class Powerball extends JavaPlugin implements Listener {
         super.onDisable();
     }
 }
-
 
