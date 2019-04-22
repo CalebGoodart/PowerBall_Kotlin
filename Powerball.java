@@ -52,7 +52,7 @@ public class Powerball extends JavaPlugin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         final Player player = event.getPlayer();
 
-        event.setJoinMessage("Welcome, " + player.getName() + "to My Server!");
+        event.setJoinMessage("Welcome, " + player.getName());
 
     }
 
@@ -214,7 +214,13 @@ public class Powerball extends JavaPlugin implements Listener {
 
         public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-            startGame();
+            try{
+                startGame();
+            }catch (IllegalStateException exception){
+
+                sender.sendMessage("Game is already running!");
+            }
+
             return true;
         }
     }
@@ -224,14 +230,13 @@ public class Powerball extends JavaPlugin implements Listener {
 
         Player player = event.getPlayer();
 
-        player.sendMessage(event.getTo().getY() + " " + event.getFrom().getY());
+        if (event.getTo().equals(event.getFrom())) return;
 
         if ((event.getFrom().getY() - event.getTo().getY() > .6 )
                 && event.getTo().getBlock().getRelative(BlockFace.DOWN).getType() == Material.BROWN_MUSHROOM_BLOCK) {
 
             Vector c = new Vector(player.getVelocity().getX(), 3, player.getVelocity().getZ());
             player.setVelocity(c);
-            player.sendMessage("BOUNCE");
         }
     }
 
